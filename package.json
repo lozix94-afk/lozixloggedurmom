@@ -1,1 +1,6 @@
 
+{
+  "name": "app",
+  "main": "server.js",
+  "dependencies": { "express": "*" }
+}
